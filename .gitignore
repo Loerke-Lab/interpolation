@@ -1,0 +1,8 @@
+# mac files that control how icons are displayed in finder
+.DS_Store
+
+# Matlab autosave files
+*.asv
+
+# Adobe Illustrator files
+*.ai
