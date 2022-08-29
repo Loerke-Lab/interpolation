@@ -1,4 +1,4 @@
-function [ result ] = interpolatePointVals2Vec_gauss_wstd_wse( valuematrix, bins, sigma, displayVariable )
+function [ result ] = interpolatePointVals2Vec_gauss( valuematrix, bins, sigma, displayVariable )
 % construct a value vector using values at unevenly spaced locations; the 
 % parameter vector is interpolated using gaussian weighting of distances; 
 % in addition it is possible to weight contributions using an external
@@ -24,12 +24,8 @@ function [ result ] = interpolatePointVals2Vec_gauss_wstd_wse( valuematrix, bins
 % OUPUT:   result          n x 2 matrix containing:
 %                           first column:   bin x-coordinates
 %                           second column:  interpolated y-coordinates
-%                           third column:   standard deviation
-%                           fourth column:  n (sum of normalized weights)
-%                           fifth column:   standard error of mean (=std/sqrt(n))
 %
 % written 02/06/2014 Dinah Loerke
-% updated 08/21/2020 DL for n and sem
 
 display = 0;
 if nargin>3
@@ -47,8 +43,6 @@ if size(valuematrix,2)>2
     weightvec_sig = valuematrix(:,3);
 end
 
-% initialize results
-result = nan*zeros(length(bins),5);
 
 % loop over bins
 for i=1:length(bins)
@@ -71,31 +65,21 @@ for i=1:length(bins)
     weightvec = weightvec_dist.*weightvec_sig;
     
     % weighted average of the data parameter (yvec) for this bin
-    valuvec = nansum((yvec.*weightvec),1)./nansum(weightvec,1);
-    
-    % to estimate standard deviation, first determine square difference of
-    % each point from average 
-    varvec = (yvec - valuvec).^2;
-    % to estimate variance (and then std), again weight these differences
-    % with the weightvector
-    variance = nansum((varvec.*weightvec),1)./nansum(weightvec,1);
-    
-    % n = sum of normalized weights
-    num = nansum(weightvec,1);
-     
+    % valuvec = nansum((yvec.*weightvec),1)./nansum(weightvec,1); % OLD CODE -- nansum no longer supported
+    valuvec = sum((yvec.*weightvec),1,'omitnan')./sum(weightvec,1,'omitnan'); % added 6/13/22 KB
+
+
     % write results (averaged parameter values for the current pixels) into
     % the results at the specified positions 
-    result(i,1:5) = [bins(i) valuvec sqrt(variance) num sqrt(variance)/sqrt(num)];
+    result(i,1:2) = [bins(i) valuvec];
     
 end % of for i-loop
 
 % display results
 if display == 1
     figure;
-    hold off; plot(xvec,yvec,'bo');
+    hold off; plot(xvec,yvec,'c.');
     hold on; plot(result(:,1),result(:,2),'r.-');
-    hold on; errorbar(result(:,1),result(:,2),result(:,3),'g-');
-    hold on; errorbar(result(:,1),result(:,2),result(:,5),'m-');
 end
 
 end
